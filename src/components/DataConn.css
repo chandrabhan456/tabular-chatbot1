@@ -122,11 +122,12 @@
   border-radius: 5px;
   background-color: #f7f7f7;
   text-align: center;
-  font-size: 25px;
+  font-size: 15px;
   color: #333;
-  width:60%;
+  width:58.5%;
   height: 100vh; /* Custom height */
-  
+  overflow-y: scroll;
+
 }
 .pdf-container {
   height: 98vh; /* Adjust the height as needed */

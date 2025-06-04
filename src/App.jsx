@@ -23,28 +23,29 @@ function App() {
     <div className="flex flex-col min-h-screen">
       
       {/* Navbar - Full Width at Top */}
-      <div className="fixed top-0 left-0 w-full bg-white z-50 shadow-md custom-navbar">
+      <div className="fixed top-0 left-0 w-full  z-50 shadow-md custom-navbar">
         <Navbar />
       </div>
 
       {/* Sidebar & Content Container (Below Navbar) */}
       <div className="flex flex-row mt-12">
         {/* Sidebar - Fixed on Left */}
-        {<div className="w-80 h-screen fixed left-0 top-12 bg-[#F7F8FB] ">
+        {<div className="w-80 h-screen fixed left-0 top-12 bg-gray-900 ">
           <Sidebar />
         </div>}
         
      {/* Main Content - Takes Remaining Space */}
  <div className={`transition-all duration-300 w-full overflow-x-hidden ml-80`}>
   <Routes>
-  {mainPage && (
+    
+  
       <>
       
         <Route path="/" element={<DataPage />} />
          <Route path="/dataconnection" element={<DataPage />} />
           <Route path="/openAIConfig" element={<OpenAIPage />} />
            <Route path="/chatbot" element={<Chatbot />} />
-      </>)}
+      </>
    
 
     {/* Documentation routes */}

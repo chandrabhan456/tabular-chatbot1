@@ -15,10 +15,10 @@ const Sidebar = () => {
     width: "100%",
     padding: "8px",
     borderRadius: "4px",
-    backgroundColor: location.pathname === path ? "#0E61D1" : "#e9ecef",
-    color: location.pathname === path ? "#fff" : "#333",
+ 
+    color: location.pathname === path ? "#0D85D8" : "#ffffff",
     cursor: "pointer",
-    transition: "background-color 0.3s",
+  
     border: "none",
     textAlign: "left",
     textDecoration: "none",
@@ -39,10 +39,10 @@ const Sidebar = () => {
                 margin: "0 auto",
               }}
             />
-               <nav
+               <nav className="bg-gray-900"
           style={{
             marginTop: "10px",
-            backgroundColor: "#f8f9fa",
+          
             padding: "6px",
           }}
         >
@@ -57,12 +57,15 @@ const Sidebar = () => {
           >
             <li style={{ fontSize: "1.25rem", margin: "8px 0" }}>
               <button
+                  
                 onClick={() => handleNavigation("/")}
                 style={buttonStyles("/")}
+              className="bg-gray-900"
               >
-                💾 Data Connection
+               💾 Data Connection
               </button>
             </li>
+           
             <li style={{ fontSize: "1.25rem", margin: "8px 0" }}>
               <button
                 onClick={() => handleNavigation("/openAIConfig")}

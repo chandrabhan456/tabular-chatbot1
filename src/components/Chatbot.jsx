@@ -91,7 +91,7 @@ setInputValue('');
         style={{ width: showHistory ? "70%" : "100%" }}
       >
         <div className="content-header">
-          <p className="text-3xl">Tabular Chatbot </p>
+          <p className="text-3xl">{currentChat} </p>
 
           <div
             className="button-group1"
@@ -105,7 +105,9 @@ setInputValue('');
             <button className="history-button text-xl" onClick={toggleHistory}>
              Chat History
             </button>
-           
+               <button className="new-chat-button text-xl" onClick={addNewChat}>
+              New Chat
+            </button>
           </div>
         </div>
       
@@ -148,7 +150,7 @@ setInputValue('');
         </div>
       </div>
       {showHistory && (
-        <div className="history-box ml-2 transition-all duration-300 text-left m-0">
+        <div className="history-box ml-2 mt-2 transition-all duration-300 text-left m-0">
           <h2 className="history-title">Chat History</h2>
           <ul className="chat-list">
             {chatList.map((chat, index) => (

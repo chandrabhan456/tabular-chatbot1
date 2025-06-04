@@ -23,16 +23,16 @@ const Navbar = () => {
   };
   return (
     <div >
-      <div className="flex justify-between md:mx-0  relative w-full dark:bg-black">
+      <div className="flex justify-between md:mx-0  relative w-full bg-black">
         <div className="flex">
           <img
-            style={{ width: "250px", marginLeft: "-5px", marginTop: "-5px" }}
+            style={{ width: "250px", marginLeft: "-5px", marginTop: "5px" }}
             className=""
             src={nttlogo}
             alt="nttlogo"
           />
           <div
-            className="mt-2 text-3xl"
+            className="mt-5 text-3xl text-white"
           
             style={{ cursor: "pointer" }}
           >
@@ -41,7 +41,7 @@ const Navbar = () => {
         </div>
 
         <div
-          className={`relative inline-flex rounded-full h-2 right-4 top-1.5`}
+          className={`relative inline-flex rounded-full h-2 right-4 top-2.5`}
         >
          
           <div
@@ -50,7 +50,7 @@ const Navbar = () => {
            
           >
           
-            <div className="cursor-pointer w-24 text-center px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"  onClick={handleLogout}>
+            <div className="cursor-pointer w-24 text-center mt-3 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"  onClick={handleLogout}>
   Logout
 </div>
 
