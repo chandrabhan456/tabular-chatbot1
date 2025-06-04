@@ -1,5 +1,5 @@
 .upload-container {
-    width: 50%;
+    width: 99%;
     height: 75px;
     border: 2px dashed #ccc;
     border-radius: 10px;
@@ -27,4 +27,109 @@
     color: #555;
     text-align: center;
     pointer-events: none;
+}
+
+.file-info {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f7f7f7;
+  text-align: center;
+  font-size: 25px;
+  color: #333;
+  width:40%;
+  height:100vh; /* Custom height */
+ 
+  overflow-x: scroll;
+ /* Hide content if it overflows the height */
+  text-overflow: ellipsis; /* Add ellipsis for long text */
+  white-space: nowrap; /* Prevent wrapping */
+}
+ .home-button {
+    background: linear-gradient(45deg, #007bff, #00d4ff);
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px 20px;
+    border: none;
+    width: 160px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .home-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  .home-button:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  .progress-bar-container {
+  position: relative;
+  width: 100%;
+  height: 10px; /* Adjust height as needed */
+  background-color: #f0f0f0; /* Background for the container */
+  overflow: hidden;
+  border-radius: 5px; /* Optional: rounded corners */
+}
+
+.progress-bar {
+  position: absolute;
+  top: 0;
+  left: -100%; /* Start from outside the container */
+  width: 30%; /* Width of the animated bar */
+  height: 100%;
+  background-color: green; /* Bar color */
+  border-radius: 5px; /* Match container's rounding */
+  animation: progressMove 2s linear infinite; /* Animation */
+}
+
+/* Animation keyframes */
+@keyframes progressMove {
+  0% {
+    left: -30%; /* Start outside on the left */
+  }
+  50% {
+    left: 50%; /* Reach the center */
+  }
+  100% {
+    left: 100%; /* Move outside to the right */
+  }
+}
+
+
+.message-box {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #d4edda; /* Light green */
+  color: #155724; /* Dark green text */
+  border: 1px solid #c3e6cb; /* Border for light green box */
+  border-radius: 5px;
+  font-size: 16px;
+  text-align: center;
+}
+.pdf-info {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f7f7f7;
+  text-align: center;
+  font-size: 25px;
+  color: #333;
+  width:60%;
+  height: 100vh; /* Custom height */
+  
+}
+.pdf-container {
+  height: 98vh; /* Adjust the height as needed */
+  overflow-y: auto; /* Enable vertical scrolling */
+  border: 1px solid #ccc; /* Optional: Add a border for better visualization */
 }
