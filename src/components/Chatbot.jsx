@@ -4,6 +4,12 @@ import "./Chatbot.css";
 
 import { ThumbsUp, ThumbsDown, Copy, Download } from "lucide-react";
 import { data } from "react-router-dom";
+import BarChart from './BarChart'; // Import the BarChart compone
+const dummyChartData = {
+  labels: ['January', 'February', 'March', 'April', 'May'],
+  label: 'Monthly Sales',
+  values: [65, 59, 80, 81, 56]
+};
 const Chatbot = () => {
   const [messages, setMessages] = useState({
     Chat01: [], // Initialize Chat01 with an empty array
@@ -42,6 +48,21 @@ const Chatbot = () => {
     setSuggestion(true)
     // Implement any logic needed when a suggestion is clicked
   }
+  const generateChartData = (data) => {
+  return {
+    labels: data.map(item => item.customer_state),
+    datasets: [
+      {
+        label: 'Customer Count by State',
+        data: data.map(item => item.customer_count),
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1,
+      },
+    ],
+  };
+};
+
   const handleSendMessage = async () => {
     if ((!inputValue.trim() && !suggestion) ) return;
     
@@ -79,6 +100,7 @@ const Chatbot = () => {
       });
      
       if (res.ok) {
+        console.log(messages)
         
         const data = await res.json();
         console.log("ffffffffffff", data);
@@ -167,7 +189,8 @@ const Chatbot = () => {
         setAmbiguous(true)
       const assistantMsg = {
         role: "assistant",
-        content: data.sql_query,
+        content: data.output_query,
+       chartData: generateChartData(data.result), // Use the dynamic chartData
         suggestion: data.suggestions, // Combine suggestions into a single string
       };
 
@@ -243,10 +266,10 @@ const Chatbot = () => {
         setResponseTime(timeTaken);
         setAmbiguous(data.ambiguous)
         if(data.ambiguous === false){
-          
+          setSuggestion(false)
           handleSendMessage2()
         }
-        setSuggestion(false)
+        
      
       }
     } catch (error) {
@@ -272,6 +295,7 @@ const Chatbot = () => {
     }
   };
   useEffect(() => {}, [showHistory, currentChat, inputValue]);
+
 
   return (
     <div className="h-screen bg-white flex  ">
@@ -321,6 +345,11 @@ const Chatbot = () => {
                   {msg.role === "assistant"
                     ? ` ${msg.content}`
                     : ` ${msg.content}`}
+                    {msg.role === "assistant" && msg.chartData ? (
+              <BarChart chartData={msg.chartData} />
+            ) : (
+              <span></span>
+            )}
                   {msg.suggestion &&
                     msg.suggestion.map((suggestion, index) => (
                       <div key={index} className="mt-2 items-left">
@@ -367,19 +396,7 @@ const Chatbot = () => {
                       </span>
                     )}
 
-                    {msg.timeTaken && (
-                      <>
-                        <span className="text-xs text-gray-500 ml-2">
-                          ⏱️ {msg.timeTaken}s
-                        </span>
-                        <span
-                          className="text-lg text-gray-500 ml-2"
-                          style={{ marginTop: "-8px" }}
-                        >
-                          $
-                        </span>
-                      </>
-                    )}
+                   
                   </div>
                 )}
               </div>
