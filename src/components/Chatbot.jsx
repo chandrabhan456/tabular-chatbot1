@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { FiSend } from "react-icons/fi";
 import "./Chatbot.css";
 
+import { ThumbsUp, ThumbsDown, Copy, Download } from "lucide-react";
+import { data } from "react-router-dom";
 const Chatbot = () => {
   const [messages, setMessages] = useState({
     Chat01: [], // Initialize Chat01 with an empty array
@@ -9,8 +11,13 @@ const Chatbot = () => {
   const [inputValue, setInputValue] = useState("");
   const [showHistory, setShowHistory] = useState(false);
   const [chatList, setChatList] = useState(["Chat01"]);
-
+  const [isTyping, setIsTyping] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState(null);
+  const [likedIndex, setLikedIndex] = useState(null);
+  const [responseTime, setResponseTime] = useState(null);
   // State to hold the current chat
+  const [ambiguous,setAmbiguous] = useState(true)
+    const [suggestion,setSuggestion] = useState(false)
   const [currentChat, setCurrentChat] = useState("Chat01");
   const addNewChat = () => {
     const nextChatNumber = chatList.length + 1;
@@ -28,58 +35,242 @@ const Chatbot = () => {
     setInputValue(event.target.value);
   };
 
- const handleSendMessage = () => {
-    if (inputValue.trim() !== '' && currentChat) {
-      // Ensure the currentChat has been initialized in messages
-      if (!messages[currentChat]) {
-        setMessages((prevMessages) => ({ ...prevMessages, [currentChat]: [] }));
-      }
- 
-      // Add user message to current chat
-      setMessages((prevMessages) => ({
-        ...prevMessages,
-        [currentChat]: [...prevMessages[currentChat], { sender: 'user', text: inputValue }]
-      }));
-     
- 
-      const fetchBotResponse = async (currentChat, setMessages) => {
-  try {
-    const response = await fetch('http://localhost:8000/gdpr/qa_chat/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ question: inputValue }), // Send the query as expected by the API
-    });
- 
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
+  function handleSuggestionClick(suggestion) {
+    // Handle the suggestion click event
+    console.log("Suggestion clicked:", suggestion);
+    setInputValue(suggestion)
+    setSuggestion(true)
+    // Implement any logic needed when a suggestion is clicked
+  }
+  const handleSendMessage = async () => {
+    if ((!inputValue.trim() && !suggestion) ) return;
+    
+    if (!messages[currentChat]) {
+      setMessages((prevMessages) => ({ ...prevMessages, [currentChat]: [] }));
     }
+
+    // Add user message to current chat
  
-    const data = await response.json();
- 
-    // Update the state with the bot's response
+    
     setMessages((prevMessages) => ({
       ...prevMessages,
       [currentChat]: [
         ...prevMessages[currentChat],
-        { sender: 'bot', text: data.answer } // Assuming the API returns the bot's message in `data.reply`
+        { role: "user", content: inputValue },
       ],
     }));
-  } catch (error) {
-    console.error('Error fetching bot response:', error);
-  }
-};
- 
-// Use the function to fetch the bot response
-setTimeout(() => {
-  fetchBotResponse(currentChat, setMessages);
-}, 100);
-setInputValue('');
- 
+  
+    setInputValue("");
+
+   
+    setIsTyping(true);
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/check-ambiguity", {
+        method: "POST",
+        headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      user_query: inputValue.trim(),
+      session_id: "string" // Replace with the actual session_id if available
+    }),
+      });
+     
+      if (res.ok) {
+        
+        const data = await res.json();
+        console.log("ffffffffffff", data);
+        const endTime = performance.now();
+        const timeTaken = data.response_time; //((endTime - startTime) / 1000).toFixed(2);
+        setAmbiguous(data.ambiguous)
+        setResponseTime(timeTaken);
+           if(data.ambiguous === false){
+          
+          handleSendMessage2()
+        }
+        else{
+      const assistantMsg = {
+        role: "assistant",
+        content: data.clarification,
+        suggestion: data.suggestions, // Combine suggestions into a single string
+      };
+
+
+        setMessages((prevMessages) => ({
+          ...prevMessages,
+          [currentChat]: [...prevMessages[currentChat], assistantMsg],
+        }));
+      }
+      }
+    } catch (error) {
+      
+      console.error("Generation error:", error);
+    
+
+      const assistantMsg = {
+        role: "assistant",
+        content: "something went wrong"
+      };
+
+      setMessages((prevMessages) => ({
+        ...prevMessages,
+        [currentChat]: [...prevMessages[currentChat], assistantMsg],
+      }));
+    } finally {
+     
+      setIsTyping(false);
+      
+      //setLoading(false);
     }
   };
+  const handleSendMessage2 = async () => {
+     
+    if ((!inputValue.trim() && !suggestion) ) return;
+   
+    if (!messages[currentChat]) {
+      setMessages((prevMessages) => ({ ...prevMessages, [currentChat]: [] }));
+    }
+
+    // Add user message to current chat
  
+    
+   
+    setInputValue("");
+
+   
+    setIsTyping(true);
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/text-to-sql", {
+        method: "POST",
+        headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      user_query: inputValue.trim(),
+      session_id: "string" // Replace with the actual session_id if available
+    }),
+      });
+     
+      if (res.ok) {
+        
+        const data = await res.json();
+        console.log("ffffffffffff", data);
+        const endTime = performance.now();
+        const timeTaken = data.response_time; //((endTime - startTime) / 1000).toFixed(2);
+
+        setResponseTime(timeTaken);
+       
+        setAmbiguous(true)
+      const assistantMsg = {
+        role: "assistant",
+        content: data.sql_query,
+        suggestion: data.suggestions, // Combine suggestions into a single string
+      };
+
+
+        setMessages((prevMessages) => ({
+          ...prevMessages,
+          [currentChat]: [...prevMessages[currentChat], assistantMsg],
+        }));
+      }
+    } catch (error) {
+      
+      console.error("Generation error:", error);
+    
+
+      const assistantMsg = {
+        role: "assistant",
+        content: "something went wrong"
+      };
+
+      setMessages((prevMessages) => ({
+        ...prevMessages,
+        [currentChat]: [...prevMessages[currentChat], assistantMsg],
+      }));
+    } finally {
+   
+      setIsTyping(false);
+      //setLoading(false);
+    }
+  };
+   const handleSendMessage1 = async () => {
+    if ((!inputValue.trim() && !suggestion) ) return;
+    
+    if (!messages[currentChat]) {
+      setMessages((prevMessages) => ({ ...prevMessages, [currentChat]: [] }));
+    }
+
+    // Add user message to current chat
+ 
+    
+    setMessages((prevMessages) => ({
+      ...prevMessages,
+      [currentChat]: [
+        ...prevMessages[currentChat],
+        { role: "user", content: inputValue },
+      ],
+    }));
+  
+    setInputValue("");
+
+   
+    setIsTyping(true);
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/clarify-ambiguity", {
+        method: "POST",
+        headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      clarification: inputValue.trim(),
+      session_id: "string" // Replace with the actual session_id if available
+    }),
+      });
+     
+      if (res.ok) {
+        
+        const data = await res.json();
+        console.log("ffffffffffff", data);
+        const endTime = performance.now();
+        const timeTaken = data.response_time; //((endTime - startTime) / 1000).toFixed(2);
+
+        setResponseTime(timeTaken);
+        setAmbiguous(data.ambiguous)
+        if(data.ambiguous === false){
+          
+          handleSendMessage2()
+        }
+        setSuggestion(false)
+     
+      }
+    } catch (error) {
+      
+      console.error("Generation error:", error);
+    
+
+      const assistantMsg = {
+        role: "assistant",
+        content: "something went wrong"
+      };
+
+      setMessages((prevMessages) => ({
+        ...prevMessages,
+        [currentChat]: [...prevMessages[currentChat], assistantMsg],
+      }));
+    } finally {
+   
+     
+      setIsTyping(false);
+      
+      //setLoading(false);
+    }
+  };
   useEffect(() => {}, [showHistory, currentChat, inputValue]);
 
   return (
@@ -103,36 +294,108 @@ setInputValue('');
             }}
           >
             <button className="history-button text-xl" onClick={toggleHistory}>
-             Chat History
+              Chat History
             </button>
-               <button className="new-chat-button text-xl" onClick={addNewChat}>
+            <button className="new-chat-button text-xl" onClick={addNewChat}>
               New Chat
             </button>
           </div>
         </div>
-      
+
         {messages[currentChat].length !== 0 && (
           <div className="chat-container p-4">
-            {(messages[currentChat] || []).map((message, index) => (
+            {(messages[currentChat] || []).map((msg, i) => (
               <div
-                key={index}
-                className={`mb-4  ${
-                  message.sender === "user" ? "justify-end" : "justify-start"
-                }`}
-                style={{ display: "flex" }} // Explicitly ensure flex display
+                key={i}
+                className={`flex flex-col ${
+                  msg.role === "user" ? "items-end" : "items-start"
+                }`} // Explicitly ensure flex display
               >
                 <div
                   className={` items-center justify-center  p-2 rounded flex-shrink border w-fit max-w-[65%] min-w-[48px] min-h-[65px]  break-words whitespace-normal ${
-                    message.sender === "user"
+                    msg.role === "user"
                       ? "bg-[#EDF5FD] text-black border-gray-200"
                       : "bg-white text-black border-gray-200"
                   }`}
-                  style={{ overflow: "hidden" }}
                 >
-                  {message.text}
+                  {msg.role === "assistant"
+                    ? ` ${msg.content}`
+                    : ` ${msg.content}`}
+                  {msg.suggestion &&
+                    msg.suggestion.map((suggestion, index) => (
+                      <div key={index} className="mt-2 items-left">
+                        <button
+                          key={index}
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className="mt-1 text-blue-700 text-sm hover:underline"
+                        >
+                          {suggestion}
+                        </button>
+                      </div>
+                    ))}
                 </div>
+
+                {msg.role === "assistant" && (
+                  <div className="flex gap-2 mt-1 text-blue-700">
+                    <ThumbsUp
+                      className={`w-4 h-4 cursor-pointer transition ${
+                        likedIndex === `up-${i}`
+                          ? "fill-blue-600"
+                          : "hover:text-blue-600"
+                      }`}
+                      onClick={() => setLikedIndex(`up-${i}`)}
+                    />
+                    <ThumbsDown
+                      className={`w-4 h-4 cursor-pointer transition ${
+                        likedIndex === `down-${i}`
+                          ? "fill-blue-600"
+                          : "hover:text-blue-600"
+                      }`}
+                      onClick={() => setLikedIndex(`down-${i}`)}
+                    />
+                    <Copy
+                      className={`w-4 h-4 cursor-pointer transition ${
+                        copiedIndex === i
+                          ? "text-green-600 scale-110"
+                          : "hover:text-blue-600"
+                      }`}
+                      onClick={() => handleCopy(msg.content, i)}
+                    />
+                    {copiedIndex === i && (
+                      <span className="text-xs text-green-600 font-medium">
+                        Copied!
+                      </span>
+                    )}
+
+                    {msg.timeTaken && (
+                      <>
+                        <span className="text-xs text-gray-500 ml-2">
+                          ⏱️ {msg.timeTaken}s
+                        </span>
+                        <span
+                          className="text-lg text-gray-500 ml-2"
+                          style={{ marginTop: "-8px" }}
+                        >
+                          $
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
+
+            {isTyping && (
+              <div className="flex flex-col items-start">
+                <div className="items-center justify-center p-2 rounded bg-white text-black border border-gray-200 animate-pulse">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                    <span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                    <span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce"></span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -144,9 +407,12 @@ setInputValue('');
             onChange={handleInputChange}
           ></textarea>
 
-          <button className="send-button" onClick={handleSendMessage}>
+          {(ambiguous && !suggestion) && <button className="send-button" onClick={handleSendMessage}>
             <FiSend className="send-icon" />
-          </button>
+          </button>}
+          {(ambiguous && suggestion) && <button className="send-button" onClick={handleSendMessage1}>
+            <FiSend className="send-icon" />
+          </button>}
         </div>
       </div>
       {showHistory && (
