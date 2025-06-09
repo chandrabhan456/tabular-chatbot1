@@ -220,7 +220,7 @@ const DataConnection = () => {
                 htmlFor="file-upload"
                 className="drag-label dark:text-[#D3D3D3]"
               >
-                Drag & drop a Excel or CSV file here, or click to browse
+                Drag & drop file here, or click to browse
               </label>
             </div>
             {csvFiles.length > 0 && (<>

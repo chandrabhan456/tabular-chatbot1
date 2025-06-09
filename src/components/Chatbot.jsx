@@ -4,11 +4,12 @@ import "./Chatbot.css";
 
 import { ThumbsUp, ThumbsDown, Copy, Download } from "lucide-react";
 import { data } from "react-router-dom";
-import BarChart from './BarChart'; // Import the BarChart compone
+import BarChart from "./BarChart"; // Import the BarChart compone
+import PieChart from "./PieChart"; // Import the BarChart compone
 const dummyChartData = {
-  labels: ['January', 'February', 'March', 'April', 'May'],
-  label: 'Monthly Sales',
-  values: [65, 59, 80, 81, 56]
+  labels: ["January", "February", "March", "April", "May"],
+  label: "Monthly Sales",
+  values: [65, 59, 80, 81, 56],
 };
 const Chatbot = () => {
   const [messages, setMessages] = useState({
@@ -22,9 +23,10 @@ const Chatbot = () => {
   const [likedIndex, setLikedIndex] = useState(null);
   const [responseTime, setResponseTime] = useState(null);
   // State to hold the current chat
-  const [ambiguous,setAmbiguous] = useState(true)
-    const [suggestion,setSuggestion] = useState(false)
+  const [ambiguous, setAmbiguous] = useState(true);
+  const [suggestion, setSuggestion] = useState(false);
   const [currentChat, setCurrentChat] = useState("Chat01");
+  const [graphType, setGraphType] = useState("PieChart");
   const addNewChat = () => {
     const nextChatNumber = chatList.length + 1;
     const newChatId = `Chat${
@@ -44,35 +46,55 @@ const Chatbot = () => {
   function handleSuggestionClick(suggestion) {
     // Handle the suggestion click event
     console.log("Suggestion clicked:", suggestion);
-    setInputValue(suggestion)
-    setSuggestion(true)
+    setInputValue(suggestion);
+    setSuggestion(true);
     // Implement any logic needed when a suggestion is clicked
   }
   const generateChartData = (data) => {
-  return {
-    labels: data.map(item => item.customer_state),
-    datasets: [
-      {
-        label: 'Customer Count by State',
-        data: data.map(item => item.customer_count),
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-      },
-    ],
+    const colors = [
+      "rgba(75, 192, 192, 0.2)",
+      "rgba(255, 99, 132, 0.2)",
+      "rgba(54, 162, 235, 0.2)",
+      "rgba(255, 206, 86, 0.2)",
+      "rgba(153, 102, 255, 0.2)",
+      "rgba(255, 159, 64, 0.2)",
+      "rgba(201, 203, 207, 0.2)",
+      "rgba(64, 159, 64, 0.2)",
+      "rgba(159, 64, 255, 0.2)",
+      "rgba(64, 159, 255, 0.2)",
+    ];
+
+    const borderColor = colors.map((color) => color.replace("0.2", "1"));
+
+    // Get the keys from the first item dynamically
+    const firstItemKeys = Object.keys(data[0]);
+    const labelKey = firstItemKeys[0]; // Assuming the first key is for labels
+    const dataKey = firstItemKeys[1]; // Assuming the second key is for data
+
+    return {
+      labels: data.map((item) => item[labelKey]),
+      datasets: [
+        {
+          label: `Data by ${labelKey}`,
+          data: data.map((item) => item[dataKey]),
+          backgroundColor: colors.slice(0, data.length), // Adjust to number of items
+          borderColor: borderColor.slice(0, data.length), // Adjust to number of items
+          borderWidth: 1,
+        },
+      ],
+    };
   };
-};
+
 
   const handleSendMessage = async () => {
-    if ((!inputValue.trim() && !suggestion) ) return;
-    
+    if (!inputValue.trim() && !suggestion) return;
+
     if (!messages[currentChat]) {
       setMessages((prevMessages) => ({ ...prevMessages, [currentChat]: [] }));
     }
 
     // Add user message to current chat
- 
-    
+
     setMessages((prevMessages) => ({
       ...prevMessages,
       [currentChat]: [
@@ -80,60 +102,54 @@ const Chatbot = () => {
         { role: "user", content: inputValue },
       ],
     }));
-  
+
     setInputValue("");
 
-   
     setIsTyping(true);
 
     try {
       const res = await fetch("http://127.0.0.1:8000/check-ambiguity", {
         method: "POST",
         headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      user_query: inputValue.trim(),
-      session_id: "string" // Replace with the actual session_id if available
-    }),
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_query: inputValue.trim(),
+          session_id: "string", // Replace with the actual session_id if available
+        }),
       });
-     
+
       if (res.ok) {
-        console.log(messages)
-        
+        console.log(messages);
+
         const data = await res.json();
         console.log("ffffffffffff", data);
         const endTime = performance.now();
         const timeTaken = data.response_time; //((endTime - startTime) / 1000).toFixed(2);
-        setAmbiguous(data.ambiguous)
+        setAmbiguous(data.ambiguous);
         setResponseTime(timeTaken);
-           if(data.ambiguous === false){
-          
-          handleSendMessage2()
+        if (data.ambiguous === false) {
+          handleSendMessage3();
+        } else {
+          const assistantMsg = {
+            role: "assistant",
+            content: data.clarification,
+            suggestion: data.suggestions, // Combine suggestions into a single string
+          };
+
+          setMessages((prevMessages) => ({
+            ...prevMessages,
+            [currentChat]: [...prevMessages[currentChat], assistantMsg],
+          }));
         }
-        else{
-      const assistantMsg = {
-        role: "assistant",
-        content: data.clarification,
-        suggestion: data.suggestions, // Combine suggestions into a single string
-      };
-
-
-        setMessages((prevMessages) => ({
-          ...prevMessages,
-          [currentChat]: [...prevMessages[currentChat], assistantMsg],
-        }));
-      }
       }
     } catch (error) {
-      
       console.error("Generation error:", error);
-    
 
       const assistantMsg = {
         role: "assistant",
-        content: "something went wrong"
+        content: "something went wrong",
       };
 
       setMessages((prevMessages) => ({
@@ -141,95 +157,18 @@ const Chatbot = () => {
         [currentChat]: [...prevMessages[currentChat], assistantMsg],
       }));
     } finally {
-     
       setIsTyping(false);
-      
+
       //setLoading(false);
     }
   };
-  const handleSendMessage2 = async () => {
-     
-    if ((!inputValue.trim() && !suggestion) ) return;
-   
+  const handleSendMessage1 = async () => {
+    if (!inputValue.trim() && !suggestion) return;
+
     if (!messages[currentChat]) {
       setMessages((prevMessages) => ({ ...prevMessages, [currentChat]: [] }));
     }
 
-    // Add user message to current chat
- 
-    
-   
-    setInputValue("");
-
-   
-    setIsTyping(true);
-
-    try {
-      const res = await fetch("http://127.0.0.1:8000/text-to-sql", {
-        method: "POST",
-        headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      user_query: inputValue.trim(),
-      session_id: "string" // Replace with the actual session_id if available
-    }),
-      });
-     
-      if (res.ok) {
-        
-        const data = await res.json();
-        console.log("ffffffffffff", data);
-        const endTime = performance.now();
-        const timeTaken = data.response_time; //((endTime - startTime) / 1000).toFixed(2);
-
-        setResponseTime(timeTaken);
-       
-        setAmbiguous(true)
-      const assistantMsg = {
-        role: "assistant",
-        content: data.output_query,
-       chartData: generateChartData(data.result), // Use the dynamic chartData
-        suggestion: data.suggestions, // Combine suggestions into a single string
-      };
-
-
-        setMessages((prevMessages) => ({
-          ...prevMessages,
-          [currentChat]: [...prevMessages[currentChat], assistantMsg],
-        }));
-      }
-    } catch (error) {
-      
-      console.error("Generation error:", error);
-    
-
-      const assistantMsg = {
-        role: "assistant",
-        content: "something went wrong"
-      };
-
-      setMessages((prevMessages) => ({
-        ...prevMessages,
-        [currentChat]: [...prevMessages[currentChat], assistantMsg],
-      }));
-    } finally {
-   
-      setIsTyping(false);
-      //setLoading(false);
-    }
-  };
-   const handleSendMessage1 = async () => {
-    if ((!inputValue.trim() && !suggestion) ) return;
-    
-    if (!messages[currentChat]) {
-      setMessages((prevMessages) => ({ ...prevMessages, [currentChat]: [] }));
-    }
-
-    // Add user message to current chat
- 
-    
     setMessages((prevMessages) => ({
       ...prevMessages,
       [currentChat]: [
@@ -237,49 +176,101 @@ const Chatbot = () => {
         { role: "user", content: inputValue },
       ],
     }));
-  
-    setInputValue("");
 
-   
-    setIsTyping(true);
+    setInputValue("");
+    setIsTyping(true); // Start typing indicator
 
     try {
       const res = await fetch("http://127.0.0.1:8000/clarify-ambiguity", {
         method: "POST",
         headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      clarification: inputValue.trim(),
-      session_id: "string" // Replace with the actual session_id if available
-    }),
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clarification: inputValue.trim(),
+          session_id: "string", // Replace with the actual session_id if available
+        }),
       });
-     
+
       if (res.ok) {
-        
         const data = await res.json();
         console.log("ffffffffffff", data);
-        const endTime = performance.now();
-        const timeTaken = data.response_time; //((endTime - startTime) / 1000).toFixed(2);
+        const timeTaken = data.response_time;
 
         setResponseTime(timeTaken);
-        setAmbiguous(data.ambiguous)
-        if(data.ambiguous === false){
-          setSuggestion(false)
-          handleSendMessage2()
+        setAmbiguous(data.ambiguous);
+
+        if (data.ambiguous === false) {
+          setSuggestion(false);
+          handleSendMessage3(); // Call the second API and wait for its completion
         }
-        
-     
       }
     } catch (error) {
-      
       console.error("Generation error:", error);
-    
 
       const assistantMsg = {
         role: "assistant",
-        content: "something went wrong"
+        content: "something went wrong",
+      };
+
+      setMessages((prevMessages) => ({
+        ...prevMessages,
+        [currentChat]: [...prevMessages[currentChat], assistantMsg],
+      }));
+    }
+  };
+
+  const handleSendMessage2 = async (type) => {
+    if (!inputValue.trim() && !suggestion) return;
+    
+    if (!messages[currentChat]) {
+      setMessages((prevMessages) => ({ ...prevMessages, [currentChat]: [] }));
+    }
+
+    setInputValue("");
+    setIsTyping(true);
+    try {
+      const res = await fetch("http://127.0.0.1:8000/text-to-sql", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_query: inputValue.trim(),
+          session_id: "string", // Replace with the actual session_id if available
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        console.log("ffffffffffff", data);
+        const timeTaken = data.response_time;
+
+        setResponseTime(timeTaken);
+        setAmbiguous(true);
+      
+        const assistantMsg = {
+          role: "assistant",
+          content: data.output_query,
+          chartData: generateChartData(data.result),
+           graphType1: type === 'PieChart' ? 'PieChart' : 'BarChart', // Conditional adjustmen
+          suggestion: data.suggestions,
+          
+        };
+
+        setMessages((prevMessages) => ({
+          ...prevMessages,
+          [currentChat]: [...prevMessages[currentChat], assistantMsg],
+        }));
+      }
+    } catch (error) {
+      console.error("Generation error:", error);
+
+      const assistantMsg = {
+        role: "assistant",
+        content: "something went wrong",
       };
 
       setMessages((prevMessages) => ({
@@ -287,15 +278,89 @@ const Chatbot = () => {
         [currentChat]: [...prevMessages[currentChat], assistantMsg],
       }));
     } finally {
-   
-     
       setIsTyping(false);
-      
+
       //setLoading(false);
     }
   };
-  useEffect(() => {}, [showHistory, currentChat, inputValue]);
 
+  const handleSendMessage3 = async () => {
+    if (!inputValue.trim() && !suggestion) return;
+
+    if (!messages[currentChat]) {
+      setMessages((prevMessages) => ({ ...prevMessages, [currentChat]: [] }));
+    }
+
+    // Add user message to current chat
+
+    setInputValue("");
+
+    setIsTyping(true);
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/graph-execution", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reframed_query: inputValue.trim(),
+        }),
+      });
+
+      if (res.ok) {
+        console.log(messages);
+
+        const data = await res.json();
+        console.log("ffffffffffff", data);
+        const endTime = performance.now();
+        const timeTaken = data.response_time; //((endTime - startTime) / 1000).toFixed(2);
+
+        setResponseTime(timeTaken);
+        if (data.graph_required === "graph") {
+          const normalizedGraphType = data.graph_type.toLowerCase();
+         
+          if (normalizedGraphType.includes("pie")) {
+                      handleSendMessage2('PieChart');
+            
+          } else if (normalizedGraphType.includes("bar")) {
+          
+                      handleSendMessage2('BarChart');
+          }
+
+        } else {
+          const assistantMsg = {
+            role: "assistant",
+            content: data.clarification,
+            suggestion: data.suggestions, // Combine suggestions into a single string
+          };
+
+          setMessages((prevMessages) => ({
+            ...prevMessages,
+            [currentChat]: [...prevMessages[currentChat], assistantMsg],
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Generation error:", error);
+
+      const assistantMsg = {
+        role: "assistant",
+        content: "something went wrong",
+      };
+
+      setMessages((prevMessages) => ({
+        ...prevMessages,
+        [currentChat]: [...prevMessages[currentChat], assistantMsg],
+      }));
+    } finally {
+      setIsTyping(true);
+
+      //setLoading(false);
+    }
+  };
+  useEffect(() => {}, [showHistory, currentChat, inputValue,graphType]);
 
   return (
     <div className="h-screen bg-white flex  ">
@@ -332,7 +397,7 @@ const Chatbot = () => {
               <div
                 key={i}
                 className={`flex flex-col ${
-                  msg.role === "user" ? "items-end" : "items-start"
+                  msg.role === "user" ? "items-end" : "items-start mt-2"
                 }`} // Explicitly ensure flex display
               >
                 <div
@@ -345,11 +410,12 @@ const Chatbot = () => {
                   {msg.role === "assistant"
                     ? ` ${msg.content}`
                     : ` ${msg.content}`}
-                    {msg.role === "assistant" && msg.chartData ? (
-              <BarChart chartData={msg.chartData} />
-            ) : (
-              <span></span>
-            )}
+                  {msg.role === "assistant" && msg.chartData ?  <>
+          {msg.graphType1 === 'BarChart' && <BarChart chartData={msg.chartData} />}
+          {msg.graphType1 === 'PieChart' && <PieChart chartData={msg.chartData} />}
+        </> : (
+                    <span></span>
+                  )}
                   {msg.suggestion &&
                     msg.suggestion.map((suggestion, index) => (
                       <div key={index} className="mt-2 items-left">
@@ -395,8 +461,6 @@ const Chatbot = () => {
                         Copied!
                       </span>
                     )}
-
-                   
                   </div>
                 )}
               </div>
@@ -424,12 +488,16 @@ const Chatbot = () => {
             onChange={handleInputChange}
           ></textarea>
 
-          {(ambiguous && !suggestion) && <button className="send-button" onClick={handleSendMessage}>
-            <FiSend className="send-icon" />
-          </button>}
-          {(ambiguous && suggestion) && <button className="send-button" onClick={handleSendMessage1}>
-            <FiSend className="send-icon" />
-          </button>}
+          {ambiguous && !suggestion && (
+            <button className="send-button" onClick={handleSendMessage}>
+              <FiSend className="send-icon" />
+            </button>
+          )}
+          {ambiguous && suggestion && (
+            <button className="send-button" onClick={handleSendMessage1}>
+              <FiSend className="send-icon" />
+            </button>
+          )}
         </div>
       </div>
       {showHistory && (
